@@ -1,0 +1,53 @@
+# ============================================================
+# .gitignore — Proyecto Brecha Digital Discapacidad España
+# ============================================================
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.ipynb_checkpoints/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Entornos virtuales
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Jupyter
+.jupyter/
+*.ipynb_checkpoints
+
+# Datos sensibles o grandes (NO subir el raw si pesa mucho)
+# data/raw/*.csv     # Descomentar si el CSV es muy grande
+
+# Power BI cache
+*.pbix.lock
+~*.pbix
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Outputs temporales
+outputs/reports/*.tmp
+*.log
+
+# Credenciales
+*.pem
+*.key
+secrets.json
+credentials.json
