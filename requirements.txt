@@ -1,71 +1,33 @@
 # ============================================================
 # requirements.txt
 # Proyecto: Brecha Digital y Discapacidad en España
-# Fuente:   Eurostat DSB_ICTIU01 v1.0 (2024)
-#
-# Instalación:
-#   pip install -r requirements.txt
-#
-# Versiones mínimas probadas con Python 3.11
+# Instalación: pip install -r requirements.txt
+# Python >= 3.11
 # ============================================================
 
-
-# ── Manipulación y análisis de datos ─────────────────────────
-pandas>=2.0.0
-# Carga, limpieza, transformación y exportación del dataset.
-# Usado en los tres scripts del proyecto: limpieza, feature
-# engineering y EDA. Base de todo el pipeline de datos.
-
-numpy>=1.26.0
-# Operaciones numéricas vectorizadas y manejo de NaN.
-# Usado para cálculos de brechas, normalización y lógica
-# condicional eficiente (np.where, np.isnan).
-
+# ── Análisis y manipulación de datos ─────────────────────────
+pandas>=2.0.0          # pipeline de limpieza, feature engineering y EDA
+numpy>=1.26.0          # operaciones numéricas, np.where, manejo de NaN
 
 # ── Visualización ─────────────────────────────────────────────
-matplotlib>=3.7.0
-# Generación de las 8 figuras del EDA: histograma, barras
-# horizontales y verticales, barras agrupadas, heatmap manual,
-# anotaciones y flechas. Único motor de visualización del
-# proyecto (sin seaborn ni librerías externas de estilo).
-
+matplotlib>=3.7.0      # generación de las 8 figuras analíticas del proyecto
+seaborn>=0.12.0        # heatmaps y boxplots en los notebooks de EDA
 
 # ── Machine Learning ──────────────────────────────────────────
-scikit-learn>=1.3.0
-# Clustering K-Means sobre los indicadores de brecha por país
-# (script 04_clustering.py). También proporciona StandardScaler
-# para normalización de features antes del clustering.
+scikit-learn>=1.3.0    # K-Means clustering (05_clustering_paises.ipynb)
+                       # StandardScaler para normalización de features
 
+# ── Notebooks ─────────────────────────────────────────────────
+jupyter>=1.0.0         # entorno interactivo para notebooks .ipynb
+ipykernel>=6.0.0       # kernel Python para Jupyter y VS Code
 
-# ── Entorno de notebooks ──────────────────────────────────────
-jupyter>=1.0.0
-# Entorno interactivo para los notebooks .ipynb de la carpeta
-# python/. Incluye jupyter-notebook, ipykernel y nbformat.
+# ── Exportación y base de datos ───────────────────────────────
+openpyxl>=3.1.0        # exportación a .xlsx para tablas de resultados
+sqlalchemy>=2.0.0      # ORM y conexión SQL para pandas (pd.read_sql, to_sql)
 
-ipykernel>=6.0.0
-# Kernel de Python para Jupyter. Necesario para ejecutar los
-# notebooks en VS Code y en Jupyter Lab/Notebook.
+# ── Utilidades ────────────────────────────────────────────────
+python-dotenv>=1.0.0   # gestión de variables de entorno (.env)
 
-
-# ── Exportación a Excel ───────────────────────────────────────
-openpyxl>=3.1.0
-# Motor de lectura y escritura de archivos .xlsx.
-# Requerido por pandas cuando se usa pd.to_excel() o
-# pd.read_excel(). Útil si se exportan tablas de resultados
-# para adjuntarlas al informe o compartirlas con el profesor.
-
-
-# ── Base de datos ─────────────────────────────────────────────
-sqlalchemy>=2.0.0
-# ORM y motor de conexión SQL. Permite que pandas cargue y
-# exporte datos directamente a SQLite o PostgreSQL mediante
-# pd.read_sql() y df.to_sql(), sin escribir código de
-# conexión manual en cada script.
-
-
-# ── Utilidades del proyecto ───────────────────────────────────
-python-dotenv>=1.0.0
-# Carga variables de entorno desde un archivo .env.
-# Útil para gestionar rutas, credenciales de base de datos
-# o configuraciones específicas del entorno de desarrollo
-# sin hardcodearlas en el código.
+# ── Nota sobre SQLite ─────────────────────────────────────────
+# sqlite3 es un módulo estándar de Python — NO requiere instalación
+# proyecto.db se crea con: python python/sql_loader.py
