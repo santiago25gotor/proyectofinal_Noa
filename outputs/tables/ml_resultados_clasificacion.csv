@@ -1,0 +1,4 @@
+modelo,accuracy_test,accuracy_cv,precision_alta_excl,recall_alta_excl,f1_alta_excl,mejor_modelo
+K-Nearest Neighbors,0.875,0.8273,0.7778,0.7,0.7368,True
+Random Forest,0.925,0.8074,0.8182,0.9,0.8571,False
+Árbol de Decisión,0.825,0.7822,0.6154,0.8,0.6957,False
