@@ -3,11 +3,23 @@
 -- Proyecto: Brecha Digital y Discapacidad en España
 -- Fuente  : Eurostat DSB_ICTIU01 v1.0 (2024)
 --
--- Ejecución (SQLite):
---   sqlite3 proyecto.db < sql/01_schema.sql
+-- ORDEN DE EJECUCIÓN:
+--   1. sqlite3 proyecto.db < sql/01_schema.sql
+--   2. sqlite3 proyecto.db < sql/02_seed.sql
+--   3. cd python && python sql_loader.py
+--   4. sqlite3 proyecto.db < sql/04_queries_p1_ranking.sql
+--   5. sqlite3 proyecto.db < sql/05_queries_p2_p3_vulnerabilidad.sql
+--   6. sqlite3 proyecto.db < sql/06_queries_estadisticos_powerbi.sql
 --
--- IMPORTANTE: ejecutar en orden:
---   01_schema.sql → 02_seed.sql → python sql_loader.py → analysis_queries.sql
+-- MODELO ESTRELLA (7 tablas):
+--   fact_internet_use     ← tabla de hechos (216 filas)
+--   dim_country           ← 9 entidades (8 países + EU27_2020)
+--   dim_disability_level  ← 4 niveles de discapacidad
+--   dim_sex               ← 3 valores (Total, Female, Male)
+--   dim_age_group         ← 4 grupos de edad
+--   dim_individual_type   ← 24 categorías (combinación de los 3 ejes)
+--   dim_indicator         ← 1 indicador (I_ILT12)
+--   mart_country_metrics  ← tabla de métricas resumen por país (9 filas)
 -- ============================================================
 
 -- Limpieza previa (orden inverso de dependencias)
@@ -130,6 +142,10 @@ CREATE INDEX IF NOT EXISTS idx_fact_category ON fact_internet_use (category_code
 CREATE INDEX IF NOT EXISTS idx_fact_reliable ON fact_internet_use (is_reliable);
 
 -- ── mart_country_metrics (data mart por país) ─────────────────────────────
+-- Una fila por país con todas las métricas precalculadas para Power BI.
+-- Poblada por python/sql_loader.py → función populate_mart().
+-- Los grupos de inclusión (Alta/Media/Baja) son orientativos para el dashboard.
+-- El clustering formal K-Means K=3 está en python/clustering_paises.py.
 CREATE TABLE mart_country_metrics (
     country_code             TEXT    NOT NULL,
     pct_no_disability        REAL,

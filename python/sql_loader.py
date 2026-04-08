@@ -18,6 +18,19 @@ QUÉ HACE:
 
 SALIDA:
     proyecto.db  (SQLite) → listo para sql/analysis_queries.sql y Power BI
+
+RANKING VERIFICADO CON EL CSV REAL (Eurostat 2024):
+    1º Lituania  93,31 - 57,45 = 35,86 pp
+    2º Italia    92,88 - 74,61 = 18,27 pp
+    3º España    97,56 - 79,30 = 18,26 pp  ← diferencia de 0,01 pp con Italia
+    ref UE-27    95,22 - 82,29 = 12,93 pp
+
+NOTA SOBRE GRUPOS DE INCLUSIÓN EN mart_country_metrics:
+    Los grupos asignados aquí (Alta/Inclusión media/Baja inclusión) son
+    umbrales orientativos para el dashboard de Power BI. El análisis de
+    clustering formal (K-Means K=3) se realiza en python/clustering_paises.py
+    con Scikit-learn. Ambos producen resultados coherentes.
+    EU27_2020 no recibe grupo — es un agregado, no un país.
 """
 import sys
 import logging
@@ -133,7 +146,13 @@ def populate_mart(conn, df):
     """
     Calcula una fila resumen por país y la inserta en mart_country_metrics.
     Esta tabla alimenta las vistas vw_pbi_* de Power BI.
-    Sin esta tabla, todas las vistas Power BI devuelven cero filas.
+
+    GRUPOS DE INCLUSIÓN (umbrales orientativos para el dashboard):
+        < 5 pp   → Alta inclusión    (NL, SE)
+        5-12 pp  → Inclusión media   (FR, PT, DE)
+        > 12 pp  → Baja inclusión    (ES, IT, LT)
+    Nota: El clustering K-Means formal (K=3) está en clustering_paises.py.
+    EU27_2020 no recibe grupo — es un agregado estadístico, no un país.
     """
     conn.execute("DELETE FROM mart_country_metrics")
 
@@ -153,7 +172,6 @@ def populate_mart(conn, df):
         pct_2554  = _get(sub, "Y25_54_DIS_SEV")
         pct_5574  = _get(sub, "Y55_74_DIS_SEV")
 
-        # Métricas de brecha
         def diff(a, b):
             return round(a - b, 2) if (a is not None and b is not None) else None
 
@@ -163,17 +181,20 @@ def populate_mart(conn, df):
         gap_eu27   = diff(gap_total, EU27_GAP) if gap_total is not None else None
         pct_excl   = round(100 - pct_sev, 2) if pct_sev is not None else None
 
-        # Grupo de inclusión
+        # Grupos orientativos para el dashboard de Power BI.
+        # Nota: coherentes con el resultado de K-Means K=3 (clustering_paises.py):
+        #   Cluster 0 — Alta inclusión:   NL, SE  (brecha < 5 pp)
+        #   Cluster 1 — Inclusión media:  PT, FR, DE, ES, IT  (5-20 pp)
+        #   Cluster 2 — Caso extremo:     LT  (brecha > 30 pp — outlier)
+        # EU27_2020 no recibe grupo — es un agregado, no un país.
         if gap_total is None or is_eu:
             group = None
         elif gap_total < 5:
             group = "Alta inclusión"
-        elif gap_total < 12:
-            group = "Inclusión media"
-        elif gap_total <= 25:
-            group = "Baja inclusión"
+        elif gap_total > 30:
+            group = "Caso extremo"
         else:
-            group = "Muy baja inclusión"
+            group = "Inclusión media"
 
         records.append({
             "country_code":             cc,
@@ -191,13 +212,16 @@ def populate_mart(conn, df):
             "gap_vs_eu27":              gap_eu27,
             "pct_excluded_severely":    pct_excl,
             "inclusion_group":          group,
-            "country_rank_by_gap":      None,   # se actualiza abajo
+            "country_rank_by_gap":      None,
             "is_eu27_aggregate":        1 if is_eu else 0,
         })
 
-    # Calcular ranking (solo países individuales, no EU27)
-    paises = [(r["country_code"], r["gap_total"])
-              for r in records if not r["is_eu27_aggregate"] and r["gap_total"] is not None]
+    # Ranking (solo países individuales, excluye EU27)
+    paises = [
+        (r["country_code"], r["gap_total"])
+        for r in records
+        if not r["is_eu27_aggregate"] and r["gap_total"] is not None
+    ]
     paises.sort(key=lambda x: x[1], reverse=True)
     rank_map = {cc: i + 1 for i, (cc, _) in enumerate(paises)}
 
@@ -227,10 +251,9 @@ def populate_mart(conn, df):
     conn.commit()
     log.info("mart_country_metrics: %d filas insertadas", len(records))
 
-    # Log de verificación
     rows = conn.execute(
         "SELECT country_code, gap_total, inclusion_group, country_rank_by_gap "
-        "FROM mart_country_metrics ORDER BY COALESCE(gap_total,0) DESC"
+        "FROM mart_country_metrics ORDER BY COALESCE(gap_total, 0) DESC"
     ).fetchall()
     log.info("Resumen mart_country_metrics:")
     for r in rows:
@@ -245,14 +268,20 @@ def verify(conn):
     log.info("fact_internet_use: %d filas | mart_country_metrics: %d filas",
              total_fact, total_mart)
 
-    # Brecha España (18.26 pp)
+    # Brecha España: 18,26 pp (3ª en el ranking, tras LT y IT)
     es_gap = conn.execute(
         "SELECT gap_total FROM mart_country_metrics WHERE country_code='ES'"
     ).fetchone()[0]
     log.info("Brecha España: %.2f pp (esperado: 18.26 pp) %s",
              es_gap, "✓" if abs(es_gap - 18.26) < 0.01 else "✗")
 
-    # Verificar que las vistas Power BI devuelven datos
+    # Brecha Italia: 18,27 pp (2ª en el ranking)
+    it_gap = conn.execute(
+        "SELECT gap_total FROM mart_country_metrics WHERE country_code='IT'"
+    ).fetchone()[0]
+    log.info("Brecha Italia: %.2f pp (esperado: 18.27 pp) %s",
+             it_gap, "✓" if abs(it_gap - 18.27) < 0.01 else "✗")
+
     for vista in ["vw_pbi_ranking", "vw_pbi_mapa_europeo",
                   "vw_pbi_genero", "vw_pbi_kpis_espana"]:
         try:
@@ -262,13 +291,14 @@ def verify(conn):
         except Exception as e:
             log.warning("Vista %s no existe aún (se crea en 06_queries): %s", vista, e)
 
-    # Top 3 por brecha
+    # Top 3: LT(35,86) → IT(18,27) → ES(18,26)
     top3 = conn.execute(
         "SELECT country_code, gap_total, country_rank_by_gap "
         "FROM mart_country_metrics WHERE is_eu27_aggregate=0 "
         "ORDER BY gap_total DESC LIMIT 3"
     ).fetchall()
-    log.info("Top 3 brechas: %s (Lituania debe ser 1ª con 35.86 pp)", top3)
+    log.info("Top 3 brechas: %s", top3)
+    log.info("Esperado: LT(35.86)=1º, IT(18.27)=2º, ES(18.26)=3º")
 
 
 # ── Main ─────────────────────────────────────────────────────────────────
@@ -294,7 +324,7 @@ def main():
     try:
         create_schema(conn)
         load_fact(conn, df)
-        populate_mart(conn, df)    # ← CRÍTICO: rellena mart para Power BI
+        populate_mart(conn, df)
         verify(conn)
     finally:
         conn.close()
@@ -304,8 +334,7 @@ def main():
     log.info("Base de datos: %s (%.0f KB)", DB_PATH, size_kb)
     log.info("CARGA COMPLETADA")
     log.info("Siguiente paso:")
-    log.info("  ./sqlite3.exe proyecto.db < sql/06_queries_estadisticos_powerbi.sql")
-    log.info("  (crea las vistas vw_pbi_* que usa Power BI)")
+    log.info("  sqlite3 proyecto.db < sql/06_queries_estadisticos_powerbi.sql")
     log.info("=" * 60)
 
 

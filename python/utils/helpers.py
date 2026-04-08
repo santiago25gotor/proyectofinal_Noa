@@ -1,6 +1,5 @@
 """
 utils/helpers.py — Funciones auxiliares para notebooks y scripts del proyecto.
-Usadas principalmente desde los notebooks .ipynb.
 
 Proyecto: Brecha Digital y Discapacidad en España
 Fuente:   Eurostat DSB_ICTIU01 v1.0 (2024)
@@ -25,15 +24,15 @@ PALETTE: dict[str, str] = {
     "lgray":  "#F5F5F5",
 }
 
-# ── Nombres en español ────────────────────────────────────────────────────
-# CORRECCIÓN: Lituania (LT) incluida — presenta la mayor brecha del dataset
+# Ranking verificado con CSV real (Eurostat 2024):
+#   1º LT: 35,86 pp | 2º IT: 18,27 pp | 3º ES: 18,26 pp (diferencia 0,01 pp)
 COUNTRY_NAMES_ES: dict[str, str] = {
     "DE":        "Alemania",
     "ES":        "España",
     "EU27_2020": "Media UE-27",
     "FR":        "Francia",
     "IT":        "Italia",
-    "LT":        "Lituania",      # ← CORRECCIÓN: faltaba en versión anterior
+    "LT":        "Lituania",
     "NL":        "Países Bajos",
     "PT":        "Portugal",
     "SE":        "Suecia",
@@ -48,7 +47,7 @@ COUNTRY_COLORS: dict[str, str] = {
     "FR":        "#9C27B0",
     "IT":        "#FF9800",
     "PT":        "#009688",
-    "LT":        PALETTE["red"],   # ← CORRECCIÓN: faltaba
+    "LT":        PALETTE["red"],
 }
 
 # ── Rutas del proyecto ─────────────────────────────────────────────────────
@@ -79,9 +78,9 @@ _COLS_KEEP = {
     "OBS_FLAG":                         "flag_calidad",
 }
 
-_SEX_MAP   = {"F_": "Femenino", "M_": "Masculino"}
-_AGE_MAP   = {"Y16_24_": "16-24", "Y25_54_": "25-54", "Y55_74_": "55-74"}
-_DIS_MAP   = {
+_SEX_MAP = {"F_": "Femenino", "M_": "Masculino"}
+_AGE_MAP = {"Y16_24_": "16-24", "Y25_54_": "25-54", "Y55_74_": "55-74"}
+_DIS_MAP = {
     "DIS_NONE":    "Sin discapacidad",
     "DIS_LTD":     "Limitación leve",
     "DIS_SEV":     "Limitación severa",
@@ -107,7 +106,7 @@ def decode_ind_type(code: str) -> dict:
 
 def load_and_clean(filepath=None) -> pd.DataFrame:
     """
-    Carga el CSV raw de Eurostat y devuelve un DataFrame limpio con nombres en español.
+    Carga el CSV raw de Eurostat y devuelve un DataFrame limpio.
     Incluye todos los países: ES, DE, FR, IT, NL, PT, SE, LT, EU27_2020.
     """
     if filepath is None:
@@ -123,14 +122,19 @@ def load_and_clean(filepath=None) -> pd.DataFrame:
 
 
 def compute_derived_metrics(df: pd.DataFrame) -> pd.DataFrame:
-    """Calcula métricas derivadas por país. Devuelve una fila por país."""
-    core = df[df["sexo"] == "Total"][df["grupo_edad"] == "Total"]
+    """
+    Calcula métricas derivadas por país. Devuelve una fila por país.
+
+    Ranking de brecha total (verificado con datos reales):
+      1º LT: 35,86 pp | 2º IT: 18,27 pp | 3º ES: 18,26 pp
+    """
+    core = df[(df["sexo"] == "Total") & (df["grupo_edad"] == "Total")]
     pivot = core[core["dis_nivel"].isin(["Sin discapacidad", "Limitación severa"])].pivot_table(
         index="pais_cod", columns="dis_nivel", values="pct_uso_internet"
     )
     metrics = pd.DataFrame(index=pivot.index)
-    metrics["dis_none"] = pivot.get("Sin discapacidad")
-    metrics["dis_sev"]  = pivot.get("Limitación severa")
+    metrics["dis_none"]  = pivot.get("Sin discapacidad")
+    metrics["dis_sev"]   = pivot.get("Limitación severa")
     metrics["gap_total"] = (metrics["dis_none"] - metrics["dis_sev"]).round(2)
 
     gen = df[df["dis_nivel"] == "Limitación severa"].pivot_table(
@@ -176,14 +180,20 @@ def setup_style() -> None:
 def bar_chart_brecha(df_metrics: pd.DataFrame,
                      save: bool = True,
                      filename: str = "fig_ranking_brecha.png"):
-    """Ranking horizontal de países por brecha total. España en azul, LT en rojo."""
+    """
+    Ranking horizontal de países por brecha total.
+    LT en rojo, IT y ES en azul (forman el bloque mediterráneo de alta brecha).
+
+    Nota: Italia (18,27 pp) y España (18,26 pp) presentan brechas
+    prácticamente idénticas — diferencia de solo 0,01 pp.
+    """
     setup_style()
-    data    = df_metrics[df_metrics["pais_cod"] != "EU27_2020"].sort_values("gap_total")
-    eu_gap  = df_metrics.loc[df_metrics["pais_cod"] == "EU27_2020", "gap_total"].values[0]
-    colors  = [
-        PALETTE["red"] if p == "LT"
-        else PALETTE["blue"] if p == "ES"
-        else PALETTE["lgray"]
+    data   = df_metrics[df_metrics["pais_cod"] != "EU27_2020"].sort_values("gap_total")
+    eu_gap = df_metrics.loc[df_metrics["pais_cod"] == "EU27_2020", "gap_total"].values[0]
+    colors = [
+        PALETTE["red"]  if p == "LT" else
+        PALETTE["blue"] if p in ("ES", "IT") else
+        PALETTE["lgray"]
         for p in data["pais_cod"]
     ]
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -193,13 +203,18 @@ def bar_chart_brecha(df_metrics: pd.DataFrame,
                label=f"Media UE-27: {eu_gap:.2f} pp")
     ax.bar_label(bars, fmt="%.2f pp", padding=4, fontsize=9, color=PALETTE["gray"])
     ax.set_xlabel("Brecha (puntos porcentuales)", fontsize=10)
-    ax.set_title("Brecha digital por discapacidad severa\nEspaña y pares europeos "
-                 "(Eurostat 2024)", fontsize=12, fontweight="bold", color=PALETTE["navy"])
+    ax.set_title(
+        "Brecha digital por discapacidad severa — España e Italia: bloque mediterráneo\n"
+        "Ranking europeo (Eurostat 2024)",
+        fontsize=12, fontweight="bold", color=PALETTE["navy"]
+    )
     ax.legend(fontsize=9)
-    fig.text(0.01, -0.02,
-             "Fuente: elaboración propia a partir de Eurostat DSB_ICTIU01 (2024). "
-             "Brecha = % sin discapacidad − % con discapacidad severa.",
-             fontsize=7, color=PALETTE["gray"])
+    fig.text(
+        0.01, -0.02,
+        "Fuente: elaboración propia a partir de Eurostat DSB_ICTIU01 (2024). "
+        "Brecha = % sin discapacidad − % con discapacidad severa.",
+        fontsize=7, color=PALETTE["gray"]
+    )
     plt.tight_layout()
     if save:
         fig.savefig(get_figures_path(filename))

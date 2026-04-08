@@ -16,17 +16,15 @@ IMAGES_DIR  = ROOT / "images"
 SQL_DIR     = ROOT / "sql"
 OUTPUTS_DIR = ROOT / "outputs"
 
-RAW_CSV     = DATA_RAW  / "dsb_ictiu01_eurostat_2024.csv"
-CLEAN_CSV   = DATA_PROC / "cleaned_dsb_ictiu01.csv"
-ANAL_CSV    = DATA_PROC / "analytical_dsb_ictiu01.csv"
-COUNTRY_CSV = DATA_PROC / "summary_by_country.csv"
-SPAIN_CSV   = DATA_PROC / "summary_spain.csv"
-EUROPE_CSV  = DATA_PROC / "summary_europe_comparison.csv"
-DB_PATH     = ROOT / "proyecto.db"
+RAW_CSV   = DATA_RAW  / "dsb_ictiu01_eurostat_2024.csv"
+CLEAN_CSV = DATA_PROC / "cleaned_dsb_ictiu01.csv"
+DB_PATH   = ROOT / "proyecto.db"
 
 # ── Países de interés (9 entidades) ───────────────────────────────────────
-# IMPORTANTE: Lituania (LT) incluida — presenta la mayor brecha del dataset
-# (35,86 pp). España es la 2ª con mayor brecha (18,26 pp).
+# Ranking por brecha total verificado con el CSV real de Eurostat 2024:
+#   1º Lituania  (LT):  35,86 pp — mayor brecha del dataset
+#   2º Italia    (IT):  18,27 pp — bloque mediterráneo de alta brecha
+#   3º España    (ES):  18,26 pp — diferencia de solo 0,01 pp con Italia
 TARGET_COUNTRIES: dict[str, str] = {
     "ES":        "España",
     "EU27_2020": "Media UE-27",
@@ -36,7 +34,7 @@ TARGET_COUNTRIES: dict[str, str] = {
     "NL":        "Países Bajos",
     "PT":        "Portugal",
     "SE":        "Suecia",
-    "LT":        "Lituania",      # ← CORREGIDO: excluida por error en versión anterior
+    "LT":        "Lituania",
 }
 
 EU27_CODE = "EU27_2020"
@@ -44,7 +42,7 @@ EU27_CODE = "EU27_2020"
 # ── Valores de referencia UE-27 (Total sexo, Total edad, 2024) ─────────────
 EU27_NO_DISABILITY    = 95.22
 EU27_SEVERELY_LIMITED = 82.29
-EU27_GAP_TOTAL        = EU27_NO_DISABILITY - EU27_SEVERELY_LIMITED  # 12,93 pp
+EU27_GAP_TOTAL        = EU27_NO_DISABILITY - EU27_SEVERELY_LIMITED  # 12.93 pp
 
 # ── 24 categorías de ind_type a conservar ─────────────────────────────────
 CATEGORIES_TO_KEEP: list[str] = [
@@ -120,7 +118,7 @@ COUNTRY_COLORS: dict[str, str] = {
     "NL":        PALETTE["green"],
     "PT":        "#833C00",
     "SE":        PALETTE["navy"],
-    "LT":        PALETTE["red"],   # ← Lituania en rojo (mayor brecha)
+    "LT":        PALETTE["red"],
 }
 
 SOURCE_NOTE = "Fuente: elaboración propia a partir de Eurostat DSB_ICTIU01 (2024)."

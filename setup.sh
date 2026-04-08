@@ -69,8 +69,9 @@ FILES=(
     "python/cleaning/steps.py"
     "python/cleaning/main.py"
     "python/sql_loader.py"
-    "python/utils/helpers.py"
+    "python/clustering_paises.py"
     "python/03_eda.py"
+    "python/utils/helpers.py"
     "sql/01_schema.sql"
     "sql/02_seed.sql"
     "sql/04_queries_p1_ranking.sql"
@@ -101,7 +102,8 @@ from cleaning.steps import load, validate
 from utils.helpers import COUNTRY_NAMES_ES
 assert 'LT' in TARGET_COUNTRIES, 'Lituania no está en TARGET_COUNTRIES'
 assert 'LT' in COUNTRY_NAMES_ES, 'Lituania no está en COUNTRY_NAMES_ES'
-print(f'  ✓ Módulos OK — {len(TARGET_COUNTRIES)} países (incluida Lituania)')
+assert 'IT' in TARGET_COUNTRIES, 'Italia no está en TARGET_COUNTRIES'
+print(f'  ✓ Módulos OK — {len(TARGET_COUNTRIES)} países')
 " 2>&1; then
     echo "  ✓ Imports verificados"
 else
@@ -121,11 +123,13 @@ if [ "$ALL_OK" = true ]; then
     echo "   cd python"
     echo "   python -m cleaning.main          # limpia datos"
     echo "   python sql_loader.py             # crea proyecto.db"
-    echo "   python 03_eda.py                 # genera figuras"
     echo "   cd .."
-    echo "   ./sqlite3.exe proyecto.db < sql/04_queries_p1_ranking.sql"
-    echo "   ./sqlite3.exe proyecto.db < sql/05_queries_p2_p3_vulnerabilidad.sql"
-    echo "   ./sqlite3.exe proyecto.db < sql/06_queries_estadisticos_powerbi.sql"
+    echo "   sqlite3 proyecto.db < sql/04_queries_p1_ranking.sql"
+    echo "   sqlite3 proyecto.db < sql/05_queries_p2_p3_vulnerabilidad.sql"
+    echo "   sqlite3 proyecto.db < sql/06_queries_estadisticos_powerbi.sql"
+    echo "   cd python"
+    echo "   python clustering_paises.py      # K-Means K=3"
+    echo "   python 03_eda.py                 # genera 5 figuras"
     echo ""
     echo "   # Power BI: conectar a proyecto.db y usar vistas vw_pbi_*"
 else

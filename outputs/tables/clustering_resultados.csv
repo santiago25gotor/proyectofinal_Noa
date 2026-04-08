@@ -1,0 +1,9 @@
+country_code,pais_es,gap_total,pct_sev,cluster,grupo
+LT,Lituania,35.86,57.45,2,Baja inclusión
+IT,Italia,18.269999999999996,74.61,1,Inclusión media
+ES,España,18.260000000000005,79.3,1,Inclusión media
+DE,Alemania,11.049999999999997,84.53,1,Inclusión media
+FR,Francia,9.36,86.88,1,Inclusión media
+PT,Portugal,7.260000000000005,84.47,1,Inclusión media
+SE,Suecia,4.719999999999999,94.43,0,Alta inclusión
+NL,Países Bajos,1.0499999999999972,98.67,0,Alta inclusión

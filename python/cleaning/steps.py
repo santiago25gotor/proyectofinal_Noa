@@ -1,14 +1,34 @@
 """
 cleaning/steps.py — Funciones de limpieza del pipeline.
-Cada función es un paso puro (recibe y devuelve DataFrame).
+
+Cada función es un paso puro: recibe un DataFrame y devuelve un DataFrame.
 La orquestación está en cleaning/main.py.
+
+RESULTADO ESPERADO DEL PIPELINE COMPLETO:
+    - 216 filas × 12 columnas (9 países × 24 categorías)
+    - 19 observaciones con is_reliable=False:
+        · 5 nulas     (Y16_24_DIS_SEV en ES, FR, LT, NL, SE)
+        · 14 con flag u y valor disponible (LT, SE, FR, DE, IT, PT)
+    - Rango de pct_internet_use: [46.38, 100.00]
+    - Nulos únicamente en la categoría Y16_24_DIS_SEV
+
+PASOS DEL PIPELINE (en orden de ejecución):
+    1. load()            — carga el CSV raw sin transformaciones
+    2. inspect()         — diagnóstico inicial (solo log, no modifica)
+    3. select_rename()   — selecciona 7 columnas útiles de 21 y las renombra
+    4. filter_countries()— filtra a los 9 países/agregados de interés
+    5. filter_categories()— mantiene las 24 categorías de ind_type
+    6. handle_flags()    — gestiona OBS_FLAG='u' y crea columna is_reliable
+    7. convert_types()   — convierte year → Int64, pct_internet_use → float64
+    8. decode_ind_type() — descompone category_code en disability_level, sex, age_group
+    9. reorder_sort()    — ordena columnas y filas
+   10. validate()        — verifica dimensiones, tipos y coherencia
 """
 import logging
 import pandas as pd
 import numpy as np
 from pathlib import Path
 
-# Importar desde config.py (un nivel arriba)
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import (
@@ -51,7 +71,7 @@ def select_rename(df: pd.DataFrame) -> pd.DataFrame:
 
 # ── Paso 4: Filtrado de países ────────────────────────────────────────────
 def filter_countries(df: pd.DataFrame) -> pd.DataFrame:
-    """Filtra a los 9 países/agregados de interés. Incluye Lituania (LT)."""
+    """Filtra a los 9 países/agregados de interés."""
     n_before = len(df)
     out = df[df["country_code"].isin(TARGET_COUNTRIES)].copy()
     out["country_name_es"] = out["country_code"].map(TARGET_COUNTRIES)
@@ -72,9 +92,17 @@ def filter_categories(df: pd.DataFrame) -> pd.DataFrame:
 def handle_flags(df: pd.DataFrame) -> pd.DataFrame:
     """
     Procesa OBS_FLAG='u' (baja fiabilidad estadística de Eurostat).
-    Crea columna is_reliable (bool): False si flag='u' O valor es nulo.
-    Los datos con flag 'u' se CONSERVAN marcados para que el analista
-    decida su inclusión según el contexto.
+
+    Resultado esperado sobre el CSV real de Eurostat 2024:
+        - 5 observaciones con valor nulo + flag u → is_reliable=False
+          (Y16_24_DIS_SEV en ES, FR, LT, NL, SE — muestra insuficiente)
+        - 14 observaciones con valor disponible + flag u → is_reliable=False
+          (LT, SE, FR, DE, IT, PT en diversas categorías de edad y sexo)
+        - Total: 19 observaciones con is_reliable=False
+
+    Decisión: los datos con flag u y valor disponible se CONSERVAN marcados
+    para que el analista decida su inclusión según el contexto.
+    Los nulos se excluyen del análisis de clustering y de EDA principal.
     """
     df["quality_flag"] = df["quality_flag"].fillna("").str.strip()
     df["is_reliable"]  = ~((df["quality_flag"] == "u") | df["pct_internet_use"].isna())
@@ -106,7 +134,15 @@ def convert_types(df: pd.DataFrame) -> pd.DataFrame:
 
 # ── Paso 8: Decodificación de ind_type ───────────────────────────────────
 def _decode_code(code: str) -> dict:
-    """Descompone un código ind_type en sus tres ejes analíticos."""
+    """
+    Descompone un código ind_type en sus tres ejes analíticos.
+
+    Ejemplos:
+        'DIS_NONE'         → disability='No disability',   sex='Total', age='Total'
+        'F_DIS_SEV'        → disability='Severely limited', sex='Female', age='Total'
+        'Y25_54_DIS_SEV'   → disability='Severely limited', sex='Total', age='25-54'
+        'M_Y55_74_DIS_LTD' → no existe en el dataset (el sexo siempre va primero)
+    """
     remaining = code
     sex = "Total"
     for prefix, label in [("F_", "Female"), ("M_", "Male")]:
@@ -147,12 +183,22 @@ def reorder_sort(df: pd.DataFrame) -> pd.DataFrame:
     )
 
 
-# ── Validación del output ─────────────────────────────────────────────────
+# ── Paso 10: Validación del output ────────────────────────────────────────
 def validate(df: pd.DataFrame) -> None:
-    """Comprueba dimensiones, tipos y coherencia. Lanza AssertionError si falla."""
+    """
+    Comprueba dimensiones, tipos y coherencia del DataFrame limpio.
+    Lanza AssertionError si alguna verificación falla.
+
+    Verificaciones:
+        1. Número de filas = 9 países × 24 categorías = 216
+        2. Número de países = 9
+        3. is_reliable es tipo bool
+        4. pct_internet_use está en el rango [0, 100]
+        5. Nulos únicamente en la categoría Y16_24_DIS_SEV
+    """
     n_countries  = len(TARGET_COUNTRIES)
     n_categories = len(CATEGORIES_TO_KEEP)
-    expected     = n_countries * n_categories
+    expected     = n_countries * n_categories  # 216
 
     assert len(df) == expected, (
         f"Filas: esperadas {expected} ({n_countries} países × {n_categories} "
@@ -160,13 +206,18 @@ def validate(df: pd.DataFrame) -> None:
     )
     assert df["country_code"].nunique() == n_countries, \
         f"Número de países incorrecto: {df['country_code'].unique()}"
-    assert df["is_reliable"].dtype == bool, "is_reliable debe ser tipo bool"
+    assert df["is_reliable"].dtype == bool, \
+        "is_reliable debe ser tipo bool"
 
     valid = df["pct_internet_use"].dropna()
-    assert valid.between(0, 100).all(), "Valores fuera de [0,100] en pct_internet_use"
+    assert valid.between(0, 100).all(), \
+        "Valores fuera de [0, 100] en pct_internet_use"
 
+    # Los únicos nulos permitidos son en Y16_24_DIS_SEV
+    # (muestra insuficiente en ES, FR, LT, NL, SE según Eurostat 2024)
     null_cats = set(df[df["pct_internet_use"].isna()]["category_code"].unique())
-    assert null_cats <= {"Y16_24_DIS_SEV"}, \
+    assert null_cats <= {"Y16_24_DIS_SEV"}, (
         f"Nulos inesperados en categorías distintas de Y16_24_DIS_SEV: {null_cats}"
+    )
 
     log.info("✓ Validación superada: %d filas × %d columnas", *df.shape)
