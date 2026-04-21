@@ -10,6 +10,7 @@ IFP · Innovación en Formación Profesional · Curso 2025-2026
 ![Dataset](https://img.shields.io/badge/Dataset-Eurostat_DSB__ICTIU01-003399)
 ![Metodología](https://img.shields.io/badge/Metodología-CRISP--DM-4CAF50)
 ![Licencia](https://img.shields.io/badge/Datos-Eurostat_Open_Data-blue)
+![Estado](https://img.shields.io/badge/Estado-Completado-success)
 
 ---
 
@@ -17,7 +18,7 @@ IFP · Innovación en Formación Profesional · Curso 2025-2026
 
 Este proyecto analiza y caracteriza la **brecha digital por discapacidad en España** comparada con ocho países europeos y la media UE-27, utilizando datos oficiales de Eurostat (indicador DSB_ICTIU01, año 2024).
 
-España presenta una brecha de **18,26 puntos porcentuales** entre personas sin discapacidad (97,56% de uso de Internet) y personas con discapacidad severa (79,30%). Esta cifra es prácticamente idéntica a la de Italia (18,27 pp, diferencia de solo 0,01 pp), situando a ambos países como el **bloque mediterráneo de mayor brecha digital**, superados únicamente por Lituania (35,86 pp) y muy por encima de la media europea (12,93 pp). El análisis identifica además una **doble vulnerabilidad** en mujeres con discapacidad severa (73,91%) y en el grupo de 55-74 años (76,85%).
+España presenta una brecha de **18,26 puntos porcentuales** entre personas sin discapacidad (97,56% de uso de Internet) y personas con discapacidad severa (79,30%). Esta cifra es prácticamente idéntica a la de Italia (18,27 pp), situando a ambos países como el **bloque mediterráneo de mayor brecha digital**, superados únicamente por Lituania (35,86 pp) y muy por encima de la media europea (12,93 pp). El análisis identifica además una **doble vulnerabilidad** en mujeres con discapacidad severa (73,91%) y en el grupo de 55-74 años (76,85%).
 
 El proyecto aplica el modelo **CRISP-DM** utilizando **SQL** (SQLite), **Python** (Pandas, Matplotlib, Scikit-learn) y **Power BI**, sobre un dataset de 216 observaciones en 9 entidades geográficas × 24 categorías de discapacidad, sexo y edad.
 
@@ -74,7 +75,7 @@ El problema se enmarca en tres compromisos legales: la **Agenda Digital Europa 2
 ---
 
 <details>
-<summary><h2>🗄️ 2. Dataset y fuente de datos</h2></summary>
+<summary><h2>🗄️ 2. Dataset y Fuente de Datos</h2></summary>
 
 ### 2.1 Ficha técnica
 
@@ -89,7 +90,7 @@ El problema se enmarca en tres compromisos legales: la **Agenda Digital Europa 2
 | **Países** | DE, ES, EU27_2020, FR, IT, LT, NL, PT, SE |
 | **URL** | https://ec.europa.eu/eurostat/databrowser/view/DSB_ICTIU01 |
 | **Licencia** | Datos públicos — reutilización libre con atribución a Eurostat |
-| **Archivo local** | `data/raw/dsb_ictiu01_eurostat_2024.csv` |
+| **Archivos** | `data/raw/dsb_ictiu01_eurostat_2024.csv` · `data/processed/cleaned_dsb_ictiu01.csv` |
 
 ### 2.2 Estructura del dataset
 
@@ -102,22 +103,22 @@ El problema se enmarca en tres compromisos legales: la **Agenda Digital Europa 2
 | Sexo | `Total` / `Female (F_)` / `Male (M_)` |
 | Grupo de edad | `Total` / `Y16_24` / `Y25_54` / `Y55_74` |
 
-### 2.3 Calidad de los datos
+### 2.3 Calidad y legalidad de los datos
 
 El dataset contiene **19 observaciones con flag `u`** (low reliability estadística según Eurostat):
 
-- **5 observaciones nulas** (flag `u` sin valor): todas en `Y16_24_DIS_SEV` para ES, FR, LT, NL y SE. Muestra subyacente insuficiente → excluidas del análisis.
-- **14 observaciones con flag `u` y valor disponible**: conservadas con `is_reliable=False` y usadas con advertencia en análisis descriptivos, excluidas del clustering.
+- **5 observaciones nulas** (flag `u` sin valor): todas en `Y16_24_DIS_SEV` para ES, FR, LT, NL y SE → excluidas del análisis.
+- **14 observaciones con flag `u` y valor disponible**: conservadas con `is_reliable=False`, excluidas del clustering.
 
-| País | Categorías con flag u | Decisión |
+| País | Categorías afectadas | Decisión |
 |---|---|---|
-| LT | F_DIS_SEV, M_DIS_SEV, Y16_24_DIS_LTD, Y16_24_DIS_LTD_SEV, Y16_24_DIS_SEV (nulo), Y25_54_DIS_SEV, Y55_74_DIS_SEV | Conservar con advertencia (nulo: excluir) |
-| SE | M_DIS_SEV, Y16_24_DIS_SEV (nulo), Y25_54_DIS_SEV, Y55_74_DIS_SEV | Conservar con advertencia (nulo: excluir) |
-| FR | Y16_24_DIS_LTD, Y16_24_DIS_SEV (nulo) | Conservar con advertencia (nulo: excluir) |
+| LT | F_DIS_SEV, M_DIS_SEV, Y16_24_* (varios), Y25_54_DIS_SEV, Y55_74_DIS_SEV | Conservar con advertencia / nulo: excluir |
+| SE | M_DIS_SEV, Y16_24_DIS_SEV (nulo), Y25_54_DIS_SEV, Y55_74_DIS_SEV | Conservar con advertencia / nulo: excluir |
+| FR | Y16_24_DIS_LTD, Y16_24_DIS_SEV (nulo) | Conservar con advertencia / nulo: excluir |
 | ES, NL | Y16_24_DIS_SEV (nulo) | Excluir |
 | DE, IT, PT | Y16_24_DIS_SEV (con valor) | Conservar con advertencia |
 
-- **Legalidad:** datos abiertos de Eurostat. Reutilización libre con atribución. [Política de datos de Eurostat](https://ec.europa.eu/eurostat/web/main/about/about-eurostat/legal-notices-and-privacy-policy).
+**Legalidad:** datos abiertos de Eurostat. Reutilización libre con atribución. [Política de datos de Eurostat](https://ec.europa.eu/eurostat/web/main/about/about-eurostat/legal-notices-and-privacy-policy).
 
 </details>
 
@@ -128,23 +129,23 @@ El dataset contiene **19 observaciones con flag `u`** (low reliability estadíst
 
 Se aplica el modelo **CRISP-DM** (Cross-Industry Standard Process for Data Mining) porque estructura un proceso analítico completo sobre datos observacionales agregados, desde la definición del problema hasta la presentación interpretable de resultados.
 
-| Fase | Aplicación al proyecto | Sección informe | Herramienta |
+| Fase | Aplicación al proyecto | Sección | Herramienta |
 |---|---|---|---|
 | **1. Comprensión del negocio** | Definir brecha digital por discapacidad; formular P1–P4 | Introducción | — |
 | **2. Comprensión de los datos** | Explorar DSB_ICTIU01: estructura, flags, nulos, cobertura | Sección 2-3 | Python |
-| **3. Preparación de los datos** | Pipeline de limpieza, métricas derivadas (gap, pct_vs_eu27) | Sección 6 | Python |
-| **4. Modelado** | EDA, ranking, clustering K-Means (K=3), análisis género/edad | Sección 6 | SQL + Python |
-| **5. Evaluación** | Validar coherencia, contrastar con literatura, limitaciones | Sección 7-8 | — |
+| **3. Preparación de los datos** | Pipeline de limpieza, métricas derivadas (gap, pct_vs_eu27) | Sección 5 | Python |
+| **4. Modelado** | EDA, ranking, clustering K-Means (K=3), análisis género/edad | Sección 5-6 | SQL + Python |
+| **5. Evaluación** | Validar coherencia, contrastar con literatura, limitaciones | Sección 7 | — |
 | **6. Despliegue** | Dashboard interactivo Power BI con filtros y storytelling | Sección 6 | Power BI |
 
-> **Nota metodológica:** los datos son observacionales y agregados. El análisis es **descriptivo-comparativo**, no causal. No se puede afirmar que la discapacidad *causa* menor uso de Internet; sí que *se asocia* con él en el contexto europeo de 2024.
+> **Nota metodológica:** los datos son observacionales y agregados. El análisis es **descriptivo-comparativo**, no causal. No se puede afirmar que la discapacidad *cause* menor uso de Internet; sí que *se asocia* con él en el contexto europeo de 2024.
 
 </details>
 
 ---
 
 <details>
-<summary><h2>🛠️ 4. Herramientas y tecnologías</h2></summary>
+<summary><h2>🛠️ 4. Herramientas y Tecnologías</h2></summary>
 
 ### 4.1 Herramientas implementadas
 
@@ -152,29 +153,29 @@ Se aplica el modelo **CRISP-DM** (Cross-Industry Standard Process for Data Minin
 |---|---|---|
 | **Python** | 3.11+ | Pipeline de limpieza, EDA, clustering, carga SQL |
 | **Pandas** | 2.x | Manipulación y transformación del dataset |
-| **Matplotlib** | latest | Generación de las 5 figuras analíticas |
+| **Matplotlib** | latest | Generación de las figuras analíticas |
 | **Scikit-learn** | 1.x | K-Means clustering (K=3) sobre métricas de brecha |
 | **SQL (SQLite)** | built-in | Modelo estrella, consultas analíticas, vistas Power BI |
 | **Power BI Desktop** | latest | Dashboard interactivo con 4 páginas de análisis |
 
-### 4.2 Justificación de la selección de herramientas
+### 4.2 Justificación de la selección
 
-El profesor propone un abanico amplio de herramientas. Para este proyecto concreto (216 observaciones, análisis descriptivo-comparativo, un único año de datos) se han seleccionado las tres que mejor se adaptan al tipo de análisis:
+El proyecto propone un abanico amplio de herramientas. Para este proyecto concreto (216 observaciones, análisis descriptivo-comparativo, un único año de datos) se han seleccionado las tres que mejor se adaptan:
 
-- **SQL en lugar de BigQuery:** el dataset tiene 216 filas y ~50 KB. La infraestructura distribuida de BigQuery no aporta valor operativo para este volumen. SQLite utiliza el mismo lenguaje SQL estándar y las queries son 100% compatibles con BigQuery si se quisiera escalar.
-- **Python en lugar de R/Tidyverse:** Python con Pandas ofrece las mismas capacidades de manipulación y análisis estadístico, con la ventaja adicional de integrarse de forma nativa con Scikit-learn para el clustering.
-- **Power BI en lugar de Tableau:** Power BI Desktop es gratuito y tiene integración nativa con SQLite via ODBC. La elección es de ecosistema, no de capacidad analítica.
-- **Python en lugar de Orange Data Mining:** el clustering K-Means se implementa con Scikit-learn, que produce código reproducible, versionable en GitHub y auditable línea a línea.
-- **No se usa Hadoop/HDFS ni Apache NiFi:** con 216 filas en un CSV de 50 KB, la infraestructura distribuida no aporta valor. El pipeline ETL en Python cubre íntegramente las fases de ingesta y transformación con mayor trazabilidad.
-- **No se usa Cassandra:** los datos son porcentajes agregados con estructura relacional clara. Un modelo estrella SQLite es más apropiado que una base de datos NoSQL orientada a escrituras masivas distribuidas.
+- **SQL en lugar de BigQuery:** el dataset tiene 216 filas y ~50 KB. SQLite utiliza el mismo lenguaje SQL estándar y las queries son 100% compatibles con BigQuery si se quisiera escalar.
+- **Python en lugar de R/Tidyverse:** integración nativa con Scikit-learn para clustering, permitiendo un pipeline unificado y reproducible.
+- **Power BI en lugar de Tableau:** gratuito con integración nativa a SQLite via ODBC.
+- **Python en lugar de Orange Data Mining:** código reproducible, versionable en GitHub y auditable línea a línea.
+- **Sin Hadoop/HDFS ni NiFi:** con 216 filas, la infraestructura distribuida no aporta valor. El pipeline ETL en Python cubre íntegramente las fases de ingesta y transformación.
+- **Sin Cassandra:** los datos tienen estructura relacional clara. Un modelo estrella SQLite es más apropiado que una base de datos NoSQL.
 
-### 4.3 SQL — Modelo estrella
+### 4.3 Modelo estrella SQL
 
 La base de datos `proyecto.db` implementa un modelo estrella con 7 tablas:
 
 ```
 fact_internet_use   ← tabla de hechos principal
-├── dim_country     ← 9 países + EU27
+├── dim_country
 ├── dim_disability_level
 ├── dim_sex
 ├── dim_age_group
@@ -182,63 +183,71 @@ fact_internet_use   ← tabla de hechos principal
 └── dim_indicator
 ```
 
-### 4.4 Power BI — Conexión a la base de datos
+### 4.4 Dashboard Power BI
 
-1. Ejecutar `python python/sql_loader.py` → genera `proyecto.db`
-2. Abrir Power BI Desktop → **Obtener datos** → **Base de datos ODBC**
-3. Navegar hasta `proyecto.db` en la raíz del proyecto
-4. Seleccionar las vistas `vw_pbi_*` creadas por el script 06
-5. Construir los 4 paneles del dashboard (ver `powerbi/README_powerbi.md`)
+El dashboard `powerbi/Estado_de_ES_EU_2024.pbix` consta de **4 páginas interactivas**:
+
+1. 🗺️ **Mapa europeo** — distribución geográfica de la brecha digital
+2. 🏆 **Ranking** — comparativa de los 9 países por nivel de brecha
+3. 👥 **Género** — doble vulnerabilidad mujeres × discapacidad severa
+4. 📅 **Edad** — intersección grupo de edad × discapacidad en España
+
+> Ver `powerbi/README_powerbi.md` para instrucciones de conexión ODBC.
 
 </details>
 
 ---
 
 <details>
-<summary><h2>⚙️ 5. Implementación práctica</h2></summary>
+<summary><h2>⚙️ 5. Implementación Práctica</h2></summary>
 
-### 5.1 Estructura del proyecto
+### 5.1 Estructura del repositorio
 
 ```
-brecha_digital_discapacidad_es/
+proyectofinal_Noa-main/
 │
-├── README.md
-├── requirements.txt
-├── setup.sh
-├── proyecto.db                  ← generado por sql_loader.py
+├── README.md                        ← Este archivo
+├── requirements.txt                 ← Dependencias Python
+├── setup.sh                         ← Instalación automática
+├── proyecto.db                      ← Base de datos SQLite (generada)
 │
 ├── data/
-│   ├── raw/                     ← CSV original de Eurostat (NO modificar)
-│   └── processed/               ← generado por cleaning/main.py
+│   ├── raw/
+│   │   └── dsb_ictiu01_eurostat_2024.csv     ← Dataset original (NO modificar)
+│   ├── processed/
+│   │   └── cleaned_dsb_ictiu01.csv           ← Dataset limpio
+│   └── README_data.md
 │
 ├── python/
-│   ├── config.py                ← constantes centrales del proyecto
+│   ├── config.py                    ← Constantes centrales del proyecto
 │   ├── cleaning/
-│   │   ├── steps.py             ← 9 funciones de limpieza
-│   │   └── main.py              ← orquestador del pipeline
-│   ├── sql_loader.py            ← carga CSV limpio → SQLite
-│   ├── clustering_paises.py     ← K-Means K=3 con Scikit-learn
-│   ├── 03_eda.py                ← genera 5 figuras analíticas
-│   └── utils/helpers.py         ← funciones para notebooks
+│   │   ├── steps.py                 ← 9 funciones de limpieza modulares
+│   │   └── main.py                  ← Orquestador del pipeline
+│   ├── sql_loader.py                ← Carga CSV limpio → SQLite
+│   ├── clustering_paises.py         ← K-Means K=3 con Scikit-learn
+│   ├── 03_eda.py                    ← Genera figuras analíticas
+│   └── utils/helpers.py
 │
 ├── sql/
-│   ├── 01_schema.sql            ← CREATE TABLE e índices
-│   ├── 02_seed.sql              ← INSERT dimensiones + vistas base
-│   ├── 04_queries_p1_ranking.sql
-│   ├── 05_queries_p2_p3_vulnerabilidad.sql
-│   └── 06_queries_estadisticos_powerbi.sql
+│   ├── 01_schema.sql                ← CREATE TABLE e índices
+│   ├── 02_seed.sql                  ← INSERT dimensiones + vistas base
+│   ├── 04_queries_p1_ranking.sql    ← Responde P1
+│   ├── 05_queries_p2_p3_vulnerabilidad.sql  ← Responde P2 y P3
+│   └── 06_queries_estadisticos_powerbi.sql  ← Vistas para Power BI
 │
 ├── powerbi/
-│   ├── dashboard_brecha_digital.pbix
+│   ├── Estado_de_ES_EU_2024.pbix    ← Dashboard interactivo (4 páginas)
 │   └── README_powerbi.md
 │
 ├── images/
-│   ├── figures/                 ← figuras generadas por 03_eda.py
-│   └── capturas/                ← capturas del dashboard Power BI
+│   ├── figures/                     ← Figuras generadas por 03_eda.py (10 imágenes)
+│   └── capturas/                    ← Capturas del dashboard Power BI
 │
 ├── outputs/
-│   ├── tables/                  ← tablas exportadas desde notebooks
-│   └── reports/                 ← informe final en PDF
+│   ├── tables/
+│   │   ├── clustering_resultados.csv
+│   │   └── ml_resultados_clasificacion.csv
+│   └── reports/                     ← Informe final PDF
 │
 └── docs/
     ├── informe_final.pdf
@@ -248,17 +257,19 @@ brecha_digital_discapacidad_es/
 ### 5.2 Orden de ejecución
 
 ```bash
-# PASO 1 — Instalar dependencias
+# PASO 1 — Clonar e instalar
+git clone <url-repositorio>
+cd proyectofinal_Noa-main
 bash setup.sh
 
-# PASO 2 — Limpiar datos
+# PASO 2 — Limpiar datos (genera cleaned_dsb_ictiu01.csv)
 cd python/
 python -m cleaning.main
 
-# PASO 3 — Cargar en SQLite
+# PASO 3 — Cargar en SQLite (genera proyecto.db)
 python sql_loader.py
 
-# PASO 4 — Ejecutar consultas SQL
+# PASO 4 — Ejecutar consultas SQL analíticas
 cd ..
 sqlite3 proyecto.db < sql/04_queries_p1_ranking.sql
 sqlite3 proyecto.db < sql/05_queries_p2_p3_vulnerabilidad.sql
@@ -268,19 +279,36 @@ sqlite3 proyecto.db < sql/06_queries_estadisticos_powerbi.sql
 cd python/
 python clustering_paises.py
 
-# PASO 6 — Figuras del EDA
+# PASO 6 — Figuras del EDA (10 imágenes en images/figures/)
 python 03_eda.py
 
 # PASO 7 — Power BI
-# Conectar Power BI Desktop a proyecto.db (ver powerbi/README_powerbi.md)
+# Abrir powerbi/Estado_de_ES_EU_2024.pbix
+# Conectar via ODBC a proyecto.db (ver powerbi/README_powerbi.md)
 ```
+
+### 5.3 Figuras analíticas generadas
+
+| Archivo | Contenido |
+|---|---|
+| `01_ranking_brecha_total.png` | Ranking europeo de brechas por discapacidad |
+| `02_espana_vs_eu27.png` | España comparada con la media UE-27 |
+| `03_doble_vulnerabilidad_genero.png` | Análisis de género × discapacidad severa |
+| `04_analisis_edad_espana.png` | Intersección edad × discapacidad en España |
+| `05_exclusion_digital.png` | Mapa visual de exclusión digital |
+| `06_clustering_paises.png` | Resultado del clustering K-Means K=3 |
+| `06b_elbow_silhouette.png` | Validación del K óptimo (elbow + silhouette) |
+| `07_ml_comparacion_modelos.png` | Comparación de modelos de clasificación |
+| `08_ml_matriz_confusion.png` | Matriz de confusión del modelo seleccionado |
+| `09_ml_importancia_features.png` | Importancia de variables |
+| `10_ml_arbol_decision.png` | Árbol de decisión visualizado |
 
 </details>
 
 ---
 
 <details>
-<summary><h2>📊 6. Resultados principales</h2></summary>
+<summary><h2>📊 6. Resultados Principales</h2></summary>
 
 ### 6.1 Ranking europeo por brecha total (P1)
 
@@ -296,7 +324,7 @@ python 03_eda.py
 | 7 | 🇸🇪 Suecia | 99,15% | 94,43% | 4,72 | −8,21 |
 | 8 | 🇳🇱 Países Bajos | 99,72% | 98,67% | 1,05 | −11,88 |
 
-> **Italia (18,27 pp) y España (18,26 pp) presentan brechas prácticamente idénticas**, con una diferencia de solo 0,01 pp. Ambos países forman el bloque mediterráneo de mayor brecha digital, superando en más de 5 pp la media de la UE-27.
+> **Italia (18,27 pp) y España (18,26 pp) presentan brechas prácticamente idénticas**, formando el bloque mediterráneo de mayor exclusión digital. Ambos superan en más de 5 pp la media europea.
 
 ### 6.2 Doble vulnerabilidad de género (P2)
 
@@ -306,7 +334,7 @@ python 03_eda.py
 | Mujeres con discapacidad severa | **73,91%** | 82,93% |
 | **Brecha de género** | **9,92 pp** | −1,39 pp |
 
-España presenta la mayor brecha de género del dataset entre países con datos estadísticamente fiables. Las mujeres con discapacidad severa están 23,65 pp por debajo de las mujeres sin discapacidad.
+España presenta la **mayor brecha de género del dataset** entre países con datos estadísticamente fiables.
 
 ### 6.3 Intersección edad × discapacidad (P3)
 
@@ -316,8 +344,6 @@ España presenta la mayor brecha de género del dataset entre países con datos 
 | 55-74 años | **76,85%** ← perfil más vulnerable |
 | 16-24 años | *No disponible — muestra insuficiente* |
 
-El efecto del envejecimiento añade 5,46 pp de exclusión adicional dentro del colectivo con discapacidad severa en España.
-
 ### 6.4 Clustering K-Means K=3 (P4)
 
 | Grupo | Países | Brecha media |
@@ -326,8 +352,6 @@ El efecto del envejecimiento añade 5,46 pp de exclusión adicional dentro del c
 | **Inclusión media** | Alemania, Francia, Portugal | ~9,2 pp |
 | **Baja inclusión** | España, Italia, Lituania | ~24,1 pp |
 
-España e Italia comparten cluster, coherente con su práctica igualdad en brecha total (18,26 vs 18,27 pp).
-
 </details>
 
 ---
@@ -335,15 +359,20 @@ España e Italia comparten cluster, coherente con su práctica igualdad en brech
 <details>
 <summary><h2>🏁 7. Conclusiones</h2></summary>
 
-**P1 — Posición europea:** España e Italia presentan brechas digitales por discapacidad prácticamente idénticas (18,26 y 18,27 pp respectivamente), formando el bloque mediterráneo de mayor exclusión digital dentro del dataset. Ambos países superan en más de 5 pp la media europea (12,93 pp) y solo son superados por Lituania (35,86 pp). La brecha no es un problema de conectividad sino de inclusión diferencial.
+**P1 — Posición europea:** España e Italia forman el bloque mediterráneo de mayor exclusión digital (18,26 y 18,27 pp respectivamente), superando en más de 5 pp la media europea (12,93 pp). La brecha no es de conectividad sino de inclusión diferencial.
 
-**P2 — Doble vulnerabilidad (género):** Las mujeres con discapacidad severa en España usan Internet casi 10 pp menos que los hombres en la misma situación (73,91% vs 83,83%). Esta es la mayor brecha de género del dataset entre países con datos estadísticamente fiables.
+**P2 — Doble vulnerabilidad (género):** Las mujeres con discapacidad severa en España usan Internet casi 10 pp menos que los hombres en la misma situación (73,91% vs 83,83%). Es la mayor brecha de género del dataset entre países con datos fiables.
 
-**P3 — Intersección edad:** El grupo de 55-74 años con discapacidad severa en España presenta la menor tasa de uso de Internet (76,85%), combinando dos factores de exclusión. El envejecimiento añade 5,46 pp de exclusión adicional respecto al grupo de 25-54 años.
+**P3 — Intersección edad:** El grupo de 55-74 años con discapacidad severa (76,85%) concentra la mayor exclusión. El envejecimiento añade 5,46 pp de exclusión adicional respecto al grupo de 25-54 años.
 
-**P4 — Tipología de países:** El clustering K-Means con K=3 identifica tres perfiles claros. Los países de alta inclusión (Países Bajos, Suecia) comparten brechas bajas en todos los ejes. España e Italia comparten cluster, coherente con su proximidad en todos los indicadores.
+**P4 — Tipología de países:** El clustering K=3 identifica tres perfiles claros y bien diferenciados. España e Italia comparten cluster, coherente con su proximidad en todos los indicadores.
 
-**Limitaciones:** los datos son un corte transversal de 2024, son porcentajes agregados (no microdatos individuales), hay 5 valores no disponibles en `Y16_24_DIS_SEV`, y la cobertura de 8 países no es representativa del conjunto de la UE. Las correlaciones observadas son descriptivas, no causales.
+**Limitaciones del estudio:**
+- Corte transversal de 2024 — no permite análisis temporal
+- Datos agregados, no microdatos individuales
+- 5 valores no disponibles en `Y16_24_DIS_SEV`
+- Cobertura de 8 países, no representativa del conjunto UE-27
+- Correlaciones descriptivas, no causales
 
 </details>
 
@@ -352,17 +381,36 @@ España e Italia comparten cluster, coherente con su práctica igualdad en brech
 <details>
 <summary><h2>📚 8. Bibliografía</h2></summary>
 
-Ver archivo completo en [`docs/bibliografia.md`](docs/bibliografia.md).
-
 **Fuente de datos principal:**
+
 Eurostat (2024). *Persons using the internet in the past 12 months by level of disability (activity limitation)* [DSB_ICTIU01 v1.0]. Statistical Office of the European Union. https://ec.europa.eu/eurostat/databrowser/view/DSB_ICTIU01
 
 **Metodología:**
+
 Chapman, P., Clinton, J., Kerber, R., Khabaza, T., Reinartz, T., Shearer, C., & Wirth, R. (2000). *CRISP-DM 1.0: Step-by-step data mining guide*. SPSS Inc.
 
-**Literatura académica clave:**
+**Literatura académica:**
+
 - Dobransky, K., & Hargittai, E. (2006). The disability divide in Internet access and use. *Information, Communication & Society*, *9*(3), 313–334.
 - Scheerder, A. J., van Deursen, A. J. A. M., & van Dijk, J. A. G. M. (2017). Determinants of Internet skills, uses and outcomes. *Telematics and Informatics*, *34*(8), 1607–1624.
+
+**Marco normativo:**
+
+- Comisión Europea (2021). Brújula Digital 2030. Comunicación COM/2021/118.
+- Gobierno de España (2022). Estrategia Española sobre Discapacidad 2022-2030.
+- Real Decreto Legislativo 1/2013 (LGDPD). BOE núm. 289.
+
+**Herramientas:**
+
+- McKinney, W. (2022). *Python for Data Analysis* (3rd ed.). O'Reilly Media.
+- Microsoft (2024). Power BI Desktop documentation. https://docs.microsoft.com/power-bi
+- SQLite Consortium (2024). SQLite documentation. https://www.sqlite.org/docs.html
+
+**Uso de IA:**
+
+Se utilizó Claude (Anthropic, modelo Sonnet) como apoyo en la estructuración del pipeline Python, redacción de consultas SQL y revisión de coherencia del código. Todo el contenido analítico, la interpretación de resultados y las conclusiones son responsabilidad de la autora.
+
+Ver bibliografía completa en [`docs/bibliografia.md`](docs/bibliografia.md).
 
 </details>
 
@@ -391,40 +439,51 @@ El dataset contiene **19 observaciones con flag `u`** (low reliability):
 
 | Tipo | Países | N | Decisión |
 |---|---|:---:|---|
-| Valor nulo + flag u | ES, FR, LT, NL, SE (Y16_24_DIS_SEV) | 5 | Excluir del análisis |
+| Valor nulo + flag u | ES, FR, LT, NL, SE (Y16_24_DIS_SEV) | 5 | Excluir |
 | Valor disponible + flag u | DE, IT, PT (Y16_24_DIS_SEV) | 3 | Conservar con advertencia |
-| Valor disponible + flag u | LT (F/M_DIS_SEV, Y25_54, Y55_74), SE (M_DIS_SEV, Y25_54, Y55_74), FR (Y16_24_DIS_LTD), PT (Y16_24_DIS_LTD) | 11 | Conservar con advertencia |
+| Valor disponible + flag u | LT, SE, FR, PT (otras categorías) | 11 | Conservar con advertencia |
 
 ### Anexo C — Herramientas de IA utilizadas
 
-Se utilizó Claude (Anthropic, modelo Sonnet 4) como apoyo en la estructuración del pipeline de Python, la redacción de consultas SQL y la revisión de coherencia del código. Todo el contenido analítico, la interpretación de resultados y las conclusiones son responsabilidad del autor.
+Se utilizó **Claude (Anthropic, modelo Sonnet)** como apoyo en:
+- Estructuración del pipeline de Python
+- Revisión de coherencia del código SQL
+- Corrección de errores de sintaxis
+- Redacción técnica del README y documentación
+
+Todo el contenido analítico, la interpretación de resultados y las conclusiones son responsabilidad de la autora del proyecto.
 
 </details>
 
 ---
 
-## 📈 Entregables del Proyecto
+## 📈 Estado de Entregables
 
-- [ ] `docs/informe_final.pdf` — Informe completo (11 secciones)
-- [ ] `powerbi/dashboard_brecha_digital.pbix` — Dashboard interactivo (4 páginas)
-- [x] `python/` — Pipeline Python documentado y modular
-- [x] `sql/` — Modelo relacional + consultas analíticas
-- [x] Repositorio GitHub con estructura navegable
-- [ ] Presentación oral de 15 minutos
+| Entregable | Estado | Peso |
+|---|:---:|:---:|
+| ✅ Práctica en el aula (pipeline funcional) | Completado | 3 pts |
+| ✅ Repositorio GitHub con estructura navegable | Completado | 2 pts |
+| ✅ Entrega .zip con código y archivos | Completado | 1 pt |
+| ✅ Informe final PDF | Completado | 1 pt |
+| ✅ Redacción, ortografía y bibliografía | Completado | 1 pt |
+| 🔜 Presentación oral (15 minutos) | Pendiente | 2 pts |
 
 ---
 
-## 🚀 Inicio rápido
+## 🚀 Inicio Rápido
 
 ```bash
-git clone <repo-url>
-cd brecha_digital_discapacidad_es
+git clone <url-repositorio>
+cd proyectofinal_Noa-main
 bash setup.sh
 cd python && python -m cleaning.main && python sql_loader.py
-python clustering_paises.py   # K-Means K=3
-python 03_eda.py              # genera 5 figuras en images/figures/
+python clustering_paises.py
+python 03_eda.py
+# Abrir powerbi/Estado_de_ES_EU_2024.pbix en Power BI Desktop
 ```
+
+**Requisitos:** Python 3.11+, SQLite (incluido en Python), Power BI Desktop (gratuito).
 
 ---
 
-*Proyecto desarrollado con Python 3.11, SQL (SQLite) y Power BI. Dataset: Eurostat DSB_ICTIU01 (2024). Metodología: CRISP-DM.*
+*Proyecto desarrollado con Python 3.11, SQL (SQLite) y Power BI Desktop · Dataset: Eurostat DSB_ICTIU01 (2024) · Metodología: CRISP-DM · IFP Big Data e IA 2025-2026*
